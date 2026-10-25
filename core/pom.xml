@@ -6,20 +6,23 @@
 
     <parent>
         <groupId>io.github.fludakit</groupId>
-        <artifactId>fluda-feature-parent</artifactId>
+        <artifactId>fluda-jms-client-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <!-- TODO: Replace 'feature' with your module name -->
-    <artifactId>fluda-feature-core</artifactId>
+        <artifactId>fluda-jms-client-core</artifactId>
     <packaging>jar</packaging>
 
     <!-- TODO: Update name and description -->
-    <name>FluDa :: Feature :: Core</name>
-    <description>Core functionality for the feature module.</description>
+    <name>FluDa :: Jms Client :: Core</name>
+    <description>Fluent JMS client core: JmsClient API, MessageConverter SPI, and listener support.</description>
 
     <dependencies>
+        <dependency>
+            <groupId>jakarta.jms</groupId>
+            <artifactId>jakarta.jms-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -43,10 +46,7 @@
                             <module>
                                 <moduleInfo>
                                     <!-- TODO: Replace with your module name -->
-                                    <name>fluda.feature.core</name>
-                                    <exports>
-                                        io.github.fludakit.feature;
-                                    </exports>
+                                    <name>fluda.jms.client.core</name>
                                 </moduleInfo>
                             </module>
                         </configuration>
