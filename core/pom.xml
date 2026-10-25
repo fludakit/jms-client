@@ -24,6 +24,26 @@
             <artifactId>jakarta.jms-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jakarta-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.qpid</groupId>
+            <artifactId>qpid-jms-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -45,8 +65,10 @@
                         <configuration>
                             <module>
                                 <moduleInfo>
-                                    <!-- TODO: Replace with your module name -->
                                     <name>fluda.jms.client.core</name>
+                                    <exports>
+                                        io.github.fludakit.jms;
+                                    </exports>
                                 </moduleInfo>
                             </module>
                         </configuration>
