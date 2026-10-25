@@ -11,14 +11,13 @@
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
-    <!-- TODO: Replace 'feature' with your module name -->
-    <artifactId>fluda-feature-parent</artifactId>
+        <artifactId>fluda-jms-client-parent</artifactId>
     <packaging>pom</packaging>
 
     <!-- TODO: Update name, description, and URL -->
-    <name>FluDa :: Feature</name>
-    <description>TODO: Describe your feature module.</description>
-    <url>https://github.com/fludakit/feature</url>
+    <name>FluDa :: Jms Client</name>
+    <description>A fluent JMS client for Jakarta Messaging - send/receive with a MessageConverter SPI, in Java SE, CDI, and Jakarta EE.</description>
+    <url>https://github.com/fludakit/jms-client</url>
 
     <licenses>
         <license>
@@ -36,9 +35,9 @@
 
     <!-- TODO: Update SCM URLs to your repository -->
     <scm>
-        <connection>scm:git:git://github.com/fludakit/feature.git</connection>
-        <developerConnection>scm:git:ssh://github.com/fludakit/feature.git</developerConnection>
-        <url>https://github.com/fludakit/feature</url>
+        <connection>scm:git:git://github.com/fludakit/jms-client.git</connection>
+        <developerConnection>scm:git:ssh://github.com/fludakit/jms-client.git</developerConnection>
+        <url>https://github.com/fludakit/jms-client</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -52,7 +51,16 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Module-specific dependencies can be added here -->
+            <dependency>
+                <groupId>jakarta.jms</groupId>
+                <artifactId>jakarta.jms-api</artifactId>
+                <version>3.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.fludakit</groupId>
+                <artifactId>fluda-jms-client-core</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -73,7 +81,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/fludakit/feature</url>
+            <url>https://maven.pkg.github.com/fludakit/jms-client</url>
         </repository>
     </distributionManagement>
 
