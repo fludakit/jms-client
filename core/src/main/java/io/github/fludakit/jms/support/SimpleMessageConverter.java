@@ -1,7 +1,7 @@
-package io.github.fludakit.jms;
+package io.github.fludakit.jms.support;
 
+import io.github.fludakit.jms.JmsClientException;
 import jakarta.jms.BytesMessage;
-import jakarta.jms.JMSContext;
 import jakarta.jms.JMSContext;
 import jakarta.jms.JMSException;
 import jakarta.jms.MapMessage;

@@ -1,5 +1,6 @@
-package io.github.fludakit.jms;
+package io.github.fludakit.jms.support;
 
+import io.github.fludakit.jms.JmsClientException;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 
@@ -7,9 +8,10 @@ import jakarta.jms.JMSContext;
  * Resolves a destination <b>name</b> to a {@link Destination} - the SPI behind
  * {@code client.destination(name)} (the {@code DestinationResolver} role in Spring JMS).
  *
- * <p>The default {@link DynamicDestinationResolver} creates the destination on the broker:
- * names prefixed with {@code topic:} resolve to a topic, everything else to a queue. Applications
- * can plug in their own - e.g. a JNDI resolver on Jakarta EE or an explicit-registry resolver.</p>
+ * <p>The default {@link SimpleDestinationResolver} creates the destination on the broker
+ * (cached per name): names prefixed with {@code topic:} resolve to a topic, everything else to a
+ * queue. Applications can plug in their own - e.g. a JNDI resolver on Jakarta EE or an
+ * explicit-registry resolver.</p>
  */
 @FunctionalInterface
 public interface DestinationResolver {

@@ -1,5 +1,10 @@
 package io.github.fludakit.jms;
 
+import io.github.fludakit.jms.support.DestinationResolver;
+import io.github.fludakit.jms.support.SimpleDestinationResolver;
+import io.github.fludakit.jms.support.MessageConverter;
+import io.github.fludakit.jms.support.SimpleMessageConverter;
+
 import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
@@ -274,7 +279,7 @@ public class JmsClient implements AutoCloseable {
         private final JMSContext context;
         private String defaultDestinationName;
         private MessageConverter converter = new SimpleMessageConverter();
-        private DestinationResolver destinationResolver = new DynamicDestinationResolver();
+        private DestinationResolver destinationResolver = new SimpleDestinationResolver();
 
         private Builder(JMSContext context) {
             this.context = Objects.requireNonNull(context, "context must not be null");
@@ -294,7 +299,7 @@ public class JmsClient implements AutoCloseable {
 
         /**
          * Sets the strategy resolving destination names to {@link Destination}s
-         * (default {@link DynamicDestinationResolver}, like Spring's).
+         * (default {@link SimpleDestinationResolver}, like Spring's).
          */
         public Builder destinationResolver(DestinationResolver destinationResolver) {
             this.destinationResolver = Objects.requireNonNull(destinationResolver, "destinationResolver must not be null");
