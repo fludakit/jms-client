@@ -37,38 +37,41 @@ import java.util.function.Function;
  * client.close();
  * }</pre>
  *
- * <p>The client operates on a {@link JMSContext} (the JMS 2.0+ simplified JMSContext): created
- * from the ConnectionFactory in Java SE, or passed in as an injected, container-managed context
- * on Jakarta EE. A {@code JmsClient} is <b>not thread-safe</b> - it shares one JMSContext across
- * all its operations; for concurrent producers or consumers, create one client per thread
- * (via {@code connectionFactory.createContext()}).</p>
+ * <p>The client operates on a {@link JMSContext} (the JMS 2.0+ simplified API): created from the
+ * ConnectionFactory in Java SE, or passed in as an injected, container-managed context on
+ * Jakarta EE. A {@code JmsClient} is <b>not thread-safe</b> - it shares one JMSContext across
+ * all its operations; for concurrent producers or consumers, create one client per thread.</p>
  *
- * <p>Implements {@link AutoCloseable}: closing the client closes the underlying JMSContext.</p>
+ * <p>Implements {@link AutoCloseable}. The client owns the context it created from a
+ * ConnectionFactory and closes it; a context handed in by the caller (an injected,
+ * container-managed one) belongs to that caller and is left open - the container decides when it
+ * goes away.</p>
  */
 public class JmsClient implements AutoCloseable {
 
     private final JMSContext context;
+    private final boolean ownsContext;
     private final MessageConverter converter;
     private final DestinationResolver destinationResolver;
     private final String defaultDestinationName;
 
-    private JmsClient(JMSContext context, MessageConverter converter,
+    private JmsClient(JMSContext context, boolean ownsContext, MessageConverter converter,
                       DestinationResolver destinationResolver, String defaultDestinationName) {
         this.context = Objects.requireNonNull(context, "context must not be null");
+        this.ownsContext = ownsContext;
         this.converter = Objects.requireNonNull(converter, "converter must not be null");
         this.destinationResolver = Objects.requireNonNull(destinationResolver, "destinationResolver must not be null");
         this.defaultDestinationName = defaultDestinationName;
     }
 
     /**
-     * Starts building a client for the supplied ConnectionFactory (Java SE usage): the client
-     * creates its JMSContext through {@code connectionFactory.createContext(AUTO_ACKNOWLEDGE)}
-     * and closes it on {@link #close()} - credentials and broker settings belong on the
-     * ConnectionFactory itself.
+     * Starts building a client for the supplied ConnectionFactory (Java SE usage): {@link
+     * Builder#build()} creates the JMSContext through the ConnectionFactory with the builder's
+     * credentials and session mode (default {@code AUTO_ACKNOWLEDGE}), and the client closes it on
+     * {@link #close()}.
      */
     public static Builder builder(ConnectionFactory connectionFactory) {
-        Objects.requireNonNull(connectionFactory, "connectionFactory must not be null");
-        return new Builder(connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE));
+        return new Builder(Objects.requireNonNull(connectionFactory, "connectionFactory must not be null"));
     }
 
     /** Starts building a client around an existing (possibly container-injected) JMSContext. */
@@ -112,10 +115,16 @@ public class JmsClient implements AutoCloseable {
         return converter;
     }
 
-    /** Closes the underlying JMSContext. */
+    /**
+     * Closes the underlying JMSContext when this client created it from a ConnectionFactory.
+     * A context passed to {@link #builder(JMSContext)} is left open for its owner (the container,
+     * or the application code that created it).
+     */
     @Override
     public void close() {
-        context.close();
+        if (ownsContext) {
+            context.close();
+        }
     }
 
     /**
@@ -270,19 +279,94 @@ public class JmsClient implements AutoCloseable {
     }
 
     /**
-     * Builder for a {@link JmsClient}: accepts the JMSContext to operate on - created from a
-     * ConnectionFactory via {@link JmsClient#builder(ConnectionFactory)} (Java SE), or injected
-     * on Jakarta EE.
+     * Builder for a {@link JmsClient}: either ConnectionFactory-based (Java SE - the client
+     * creates and owns its JMSContext) or JMSContext-based (Java EE - an injected,
+     * container-managed context is used and left open).
      */
     public static final class Builder {
 
+        private final ConnectionFactory connectionFactory;
         private final JMSContext context;
+        private String username;
+        private String password;
+        private int sessionMode = Session.AUTO_ACKNOWLEDGE;
         private String defaultDestinationName;
         private MessageConverter converter = new SimpleMessageConverter();
         private DestinationResolver destinationResolver = new SimpleDestinationResolver();
 
+        private Builder(ConnectionFactory connectionFactory) {
+            this.connectionFactory = connectionFactory;
+            this.context = null;
+        }
+
         private Builder(JMSContext context) {
-            this.context = Objects.requireNonNull(context, "context must not be null");
+            this.connectionFactory = null;
+            this.context = context;
+        }
+
+        /**
+         * Sets the broker username; setting one makes {@link #build()} create an authenticated
+         * context. Ignored by a context-based builder, whose context is already authenticated.
+         */
+        public Builder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        /**
+         * Sets the broker password (default: empty); only meaningful together with
+         * {@link #username(String)}.
+         */
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        /**
+         * Sets the acknowledge mode of the context created for this client (default
+         * {@link Session#AUTO_ACKNOWLEDGE}).
+         *
+         * @throws IllegalArgumentException for {@link Session#SESSION_TRANSACTED}: a transacted
+         *                                  session needs an explicit commit, which the fluent
+         *                                  client never issues - use an injected JMSContext and
+         *                                  transact around it instead
+         */
+        public Builder sessionMode(int sessionMode) {
+            // SESSION_TRANSACTED(0) is deliberately excluded: without a commit point the client
+            // would send messages into a transaction that is rolled back on close
+            if (sessionMode != Session.AUTO_ACKNOWLEDGE
+                    && sessionMode != Session.CLIENT_ACKNOWLEDGE
+                    && sessionMode != Session.DUPS_OK_ACKNOWLEDGE) {
+                throw new IllegalArgumentException("Unsupported session mode " + sessionMode
+                        + "; use AUTO_ACKNOWLEDGE, CLIENT_ACKNOWLEDGE or DUPS_OK_ACKNOWLEDGE");
+            }
+            this.sessionMode = sessionMode;
+            return this;
+        }
+
+        /**
+         * Applies a {@link JmsConfig}: its credentials, session mode and default destination for
+         * a ConnectionFactory-based builder, and its default destination for a context-based one -
+         * a context that already exists keeps its own credentials and session mode.
+         *
+         * @throws IllegalStateException when a context-based builder is given a config with
+         *                               credentials or a non-default session mode
+         */
+        public Builder config(JmsConfig config) {
+            Objects.requireNonNull(config, "config must not be null");
+            if (connectionFactory == null) {
+                if (config.username() != null || config.password() != null
+                        || config.sessionMode() != Session.AUTO_ACKNOWLEDGE) {
+                    throw new IllegalStateException("An injected JMSContext keeps its own credentials "
+                            + "and session mode; only the default destination can be applied from JmsConfig");
+                }
+            } else {
+                this.username = config.username();
+                this.password = config.password();
+                sessionMode(config.sessionMode());
+            }
+            this.defaultDestinationName = config.defaultDestinationName();
+            return this;
         }
 
         /** Sets the default destination name for {@link JmsClient#destination()} operations. */
@@ -306,9 +390,29 @@ public class JmsClient implements AutoCloseable {
             return this;
         }
 
-        /** Builds the client. */
+        /**
+         * Builds the client, creating its JMSContext when it was configured with a
+         * ConnectionFactory.
+         *
+         * @throws JmsClientException with {@link JmsClientException.Code#CONNECTION} when the
+         *                            context cannot be created
+         */
         public JmsClient build() {
-            return new JmsClient(context, converter, destinationResolver, defaultDestinationName);
+            JMSContext jmsContext = connectionFactory != null ? createContext() : context;
+            return new JmsClient(jmsContext, connectionFactory != null, converter,
+                    destinationResolver, defaultDestinationName);
+        }
+
+        private JMSContext createContext() {
+            try {
+                if (username == null) {
+                    return connectionFactory.createContext(sessionMode);
+                }
+                return connectionFactory.createContext(username, password == null ? "" : password, sessionMode);
+            } catch (JMSRuntimeException e) {
+                throw new JmsClientException(JmsClientException.Code.CONNECTION,
+                        "Failed to create the JMS context", e);
+            }
         }
     }
 }

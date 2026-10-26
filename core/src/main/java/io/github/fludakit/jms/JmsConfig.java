@@ -43,6 +43,11 @@ public final class JmsConfig {
         return defaultDestinationName;
     }
 
+    /** Starts building a {@link JmsConfig}. */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     /** Builder for a {@link JmsConfig}. */
     public static final class Builder {
 
