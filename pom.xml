@@ -8,7 +8,7 @@
         <groupId>io.github.fludakit</groupId>
         <artifactId>fludakit-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../parent/pom.xml</relativePath>
+        <relativePath/>
     </parent>
 
         <artifactId>fluda-jms-client-parent</artifactId>
@@ -47,19 +47,35 @@
 
     <properties>
         <!-- Module-specific properties can be added here -->
+        <artemis.version>2.40.0</artemis.version>
+        <qpid-jms.version>2.7.0</qpid-jms.version>
+        <yasson.version>3.0.5</yasson.version>
+        <fluda-jms-client.version>1.0.0-SNAPSHOT</fluda-jms-client.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>jakarta.jms</groupId>
-                <artifactId>jakarta.jms-api</artifactId>
-                <version>3.1.0</version>
-            </dependency>
+            <!-- jakarta.jms-api is version-managed by the parent's jakarta.jms-api.version BOM;
+                 a version-less override here shadows that import and breaks Maven 3 -->
             <dependency>
                 <groupId>io.github.fludakit</groupId>
                 <artifactId>fluda-jms-client-core</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>${fluda-jms-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>artemis-jakarta-client</artifactId>
+                <version>${artemis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.qpid</groupId>
+                <artifactId>qpid-jms-client</artifactId>
+                <version>${qpid-jms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse</groupId>
+                <artifactId>yasson</artifactId>
+                <version>${yasson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
