@@ -23,10 +23,16 @@ import jakarta.jms.JMSContext;
  *       {@link CachingConnectionFactory} of {@link CachingConnectionFactoryProducer}, so all
  *       clients on one thread share a context (and a connection) instead of opening one per
  *       injection.</li>
+ *   <li>a {@link io.github.fludakit.jms.support.ConnectionFactorySource} bean - the {@code config}
+ *       module contributes one that builds the Artemis or Qpid factory from the
+ *       {@code fluda.jms.artemis.*} / {@code fluda.jms.qpid.*} section, when that provider's client
+ *       is on the classpath. The client is built from the caching factory, exactly as for a
+ *       factory bean.</li>
  * </ol>
  *
- * <p>When neither is available, production fails fast with {@link IllegalStateException} and
- * guidance, instead of handing out a client that only fails on the first send.</p>
+ * <p>When none is available, production fails fast with {@link IllegalStateException} and
+ * guidance (see {@link CachingConnectionFactoryProducer}), instead of handing out a client that
+ * only fails on the first send.</p>
  *
  * <p>An optional {@link JmsConfig} bean (the {@code config} module produces one from
  * {@code fluda.jms.*} properties) is applied to the spec that is used: its default destination and,
@@ -51,19 +57,17 @@ public class JmsClientProducer {
     Instance<JMSContext> jmsContexts;
 
     @Inject
-    Instance<ConnectionFactory> connectionFactories;
-
-    @Inject
     Instance<CachingConnectionFactory> cachingFactories;
 
     @Inject
     Instance<JmsConfig> configs;
 
     /**
-     * Produces a client from the injected {@link JMSContext} or {@link ConnectionFactory}.
+     * Produces a client from the injected {@link JMSContext} or connection factory.
      *
-     * @throws IllegalStateException when neither resource is available, or when a {@link JmsConfig}
-     *                               cannot be applied to the injected context
+     * @throws IllegalStateException when no {@link JMSContext} bean, {@link ConnectionFactory} bean
+     *                               or configured provider section is available, or when a
+     *                               {@link JmsConfig} cannot be applied to the injected context
      */
     @Produces
     @Dependent
@@ -74,16 +78,9 @@ public class JmsClientProducer {
             return apply(JmsClient.builder(jmsContexts.get()), config).build();
         }
 
-        if (!connectionFactories.isUnsatisfied()) {
-            return apply(JmsClient.builder(cachingFactories.get()), config).build();
-        }
-
-        throw new IllegalStateException(
-                "No JMS resources available: provide a jakarta.jms.JMSContext bean (a "
-                        + "container-managed context, as on Jakarta EE) or a "
-                        + "jakarta.jms.ConnectionFactory bean (the Artemis, Qpid or other provider "
-                        + "factory in Java SE/CDI), and optionally a JmsConfig bean for credentials "
-                        + "and the default destination");
+        // the caching factory resolves the raw factory (bean, then configured provider section)
+        // and fails with the full guidance when there is none
+        return apply(JmsClient.builder(cachingFactories.get()), config).build();
     }
 
     private static <S extends JmsClient.AbstractJmsClientSpec<S>> S apply(S spec, JmsConfig config) {

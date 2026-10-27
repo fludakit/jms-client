@@ -11,6 +11,9 @@ module fluda.jms.client.config {
     requires transitive fluda.jms.client.core;
     requires jakarta.cdi;
     requires microprofile.config.api;
+    // optional provider clients: only the one whose section is configured must be present at runtime
+    requires static artemis.jakarta.client;
+    requires static qpid.jms.client;
 
     exports io.github.fludakit.jms.config;
     opens io.github.fludakit.jms.config;
