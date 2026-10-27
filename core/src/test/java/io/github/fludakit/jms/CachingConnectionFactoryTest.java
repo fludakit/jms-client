@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -235,20 +236,21 @@ class CachingConnectionFactoryTest {
     }
 
     @Test
-    void aBoundedCacheEvictsTheLeastRecentlyUsedContext() throws Exception {
+    void aBoundedCacheEvictsTheLeastRecentlyUsedEntry() {
         CachingConnectionFactory bounded = new CachingConnectionFactory(target, 1);
         JMSContext first = contextWithClientId("first");
         JMSContext second = contextWithClientId("second");
         JMSContext third = contextWithClientId("third");
-        when(target.createContext(anyInt())).thenReturn(first, second, third);
+        when(target.createContext(anyString(), anyString(), anyInt())).thenReturn(first, second, third);
 
-        assertEquals("first", bounded.createContext().getClientID());
-        // a second thread pushes the first entry out
-        assertEquals("second", contextInAnotherThread(bounded).getClientID());
+        // three different cache keys on one thread: credentials are part of the key
+        assertEquals("first", bounded.createContext("one", "secret").getClientID());
+        // a second entry pushes the first one out
+        assertEquals("second", bounded.createContext("two", "secret").getClientID());
         verify(first, times(1)).close();
 
-        // and coming back to the first thread pushes the second one out
-        assertEquals("third", bounded.createContext().getClientID());
+        // and the next one pushes the second one out
+        assertEquals("third", bounded.createContext("three", "secret").getClientID());
         verify(second, times(1)).close();
     }
 
@@ -303,9 +305,24 @@ class CachingConnectionFactoryTest {
     }
 
     private static JMSContext contextInAnotherThread(CachingConnectionFactory caching) throws Exception {
-        Callable<JMSContext> task = caching::createContext;
-        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-            return executor.submit(task).get(10, TimeUnit.SECONDS);
+        AtomicReference<JMSContext> created = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread worker = new Thread(() -> {
+            try {
+                created.set(caching.createContext());
+            } catch (Throwable t) {
+                failure.set(t);
+            }
+        }, "caching-factory-test-worker");
+        worker.start();
+        // join() returns only when the thread is dead, which is what the eviction checks
+        worker.join(10_000);
+        if (worker.isAlive()) {
+            throw new AssertionError("the worker thread did not finish");
         }
+        if (failure.get() != null) {
+            throw new AssertionError("creating a context on another thread failed", failure.get());
+        }
+        return created.get();
     }
 }
