@@ -11,9 +11,9 @@ class AcknowledgeModeTest {
 
     @Test
     void mapsTheDocumentedValues() {
-        assertEquals(Session.AUTO_ACKNOWLEDGE, AcknowledgeMode.from("auto-acknowledge").sessionMode());
-        assertEquals(Session.CLIENT_ACKNOWLEDGE, AcknowledgeMode.from("client-acknowledge").sessionMode());
-        assertEquals(Session.DUPS_OK_ACKNOWLEDGE, AcknowledgeMode.from("dups-ok-acknowledge").sessionMode());
+        assertEquals(Session.AUTO_ACKNOWLEDGE, AcknowledgeMode.from("auto").sessionMode());
+        assertEquals(Session.CLIENT_ACKNOWLEDGE, AcknowledgeMode.from("client").sessionMode());
+        assertEquals(Session.DUPS_OK_ACKNOWLEDGE, AcknowledgeMode.from("dups-ok").sessionMode());
     }
 
     @Test
@@ -24,17 +24,20 @@ class AcknowledgeModeTest {
     }
 
     @Test
-    void ignoresCaseAndAcceptsConstantNames() {
-        assertEquals(Session.CLIENT_ACKNOWLEDGE, AcknowledgeMode.from("CLIENT_ACKNOWLEDGE").sessionMode());
-        assertEquals(Session.AUTO_ACKNOWLEDGE, AcknowledgeMode.from(" Auto-Acknowledge ").sessionMode());
+    void ignoresCaseAndAcceptsUnderscores() {
+        assertEquals(Session.CLIENT_ACKNOWLEDGE, AcknowledgeMode.from("CLIENT").sessionMode());
+        assertEquals(Session.DUPS_OK_ACKNOWLEDGE, AcknowledgeMode.from("DUPS_OK").sessionMode());
+        assertEquals(Session.AUTO_ACKNOWLEDGE, AcknowledgeMode.from(" Auto ").sessionMode());
     }
 
     @Test
-    void rejectsSessionTransactedWithGuidance() {
-        var error = assertThrows(IllegalArgumentException.class,
-                () -> AcknowledgeMode.from("session-transacted"));
-        assertTrue(error.getMessage().contains("session-transacted"));
-        assertTrue(error.getMessage().contains("JMSContext"));
+    void rejectsTransactedSessionsWithGuidance() {
+        for (String value : new String[]{"transacted", "session-transacted", "SESSION_TRANSACTED"}) {
+            var error = assertThrows(IllegalArgumentException.class,
+                    () -> AcknowledgeMode.from(value));
+            assertTrue(error.getMessage().contains("transacted"));
+            assertTrue(error.getMessage().contains("JMSContext"));
+        }
     }
 
     @Test
@@ -42,8 +45,15 @@ class AcknowledgeModeTest {
         var error = assertThrows(IllegalArgumentException.class,
                 () -> AcknowledgeMode.from("sometimes"));
         assertTrue(error.getMessage().contains("sometimes"));
-        assertTrue(error.getMessage().contains("auto-acknowledge"));
-        assertTrue(error.getMessage().contains("client-acknowledge"));
-        assertTrue(error.getMessage().contains("dups-ok-acknowledge"));
+        assertTrue(error.getMessage().contains("auto"));
+        assertTrue(error.getMessage().contains("client"));
+        assertTrue(error.getMessage().contains("dups-ok"));
+    }
+
+    @Test
+    void rejectsTheOldLongNames() {
+        // the pre-release spelling is gone; the short values replace it
+        assertThrows(IllegalArgumentException.class,
+                () -> AcknowledgeMode.from("auto-acknowledge"));
     }
 }
