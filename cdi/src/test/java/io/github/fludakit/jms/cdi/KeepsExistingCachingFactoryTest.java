@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 
 /**
- * A connection factory bean that already caches is not wrapped a second time: the {@code @Caching}
- * bean is the application's own factory.
+ * A connection factory bean that already caches is not wrapped a second time: the produced
+ * {@link CachingConnectionFactory} bean is the application's own factory.
  */
 @ExtendWith(WeldJunit5Extension.class)
 class KeepsExistingCachingFactoryTest {
@@ -29,7 +29,6 @@ class KeepsExistingCachingFactoryTest {
             .build();
 
     @Inject
-    @Caching
     CachingConnectionFactory cachingConnectionFactory;
 
     @Test

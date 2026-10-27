@@ -19,9 +19,10 @@ import jakarta.jms.JMSContext;
  *   <li>a {@link JMSContext} bean - the {@code JmsClient} uses it as is and never closes it. On
  *       Jakarta EE this is normally the container-managed context of an injected
  *       {@code @Resource JMSContext}; in Java SE a Weld application can produce one itself.</li>
- *   <li>a {@link ConnectionFactory} bean - the client is built from the {@link Caching} factory of
- *       {@link CachingConnectionFactoryProducer}, so all clients on one thread share a context
- *       (and a connection) instead of opening one per injection.</li>
+ *   <li>a {@link ConnectionFactory} bean - the client is built from the
+ *       {@link CachingConnectionFactory} of {@link CachingConnectionFactoryProducer}, so all
+ *       clients on one thread share a context (and a connection) instead of opening one per
+ *       injection.</li>
  * </ol>
  *
  * <p>When neither is available, production fails fast with {@link IllegalStateException} and
@@ -53,7 +54,6 @@ public class JmsClientProducer {
     Instance<ConnectionFactory> connectionFactories;
 
     @Inject
-    @Caching
     Instance<CachingConnectionFactory> cachingFactories;
 
     @Inject

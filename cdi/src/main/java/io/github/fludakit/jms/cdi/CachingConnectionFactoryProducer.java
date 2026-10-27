@@ -5,12 +5,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.Typed;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.jms.ConnectionFactory;
 
 /**
- * Produces the {@code @Caching} {@link CachingConnectionFactory} that backs every
+ * Produces the {@link CachingConnectionFactory} that backs every
  * {@link io.github.fludakit.jms.JmsClient} built from a {@link ConnectionFactory} bean.
  *
  * <p>Without it, every client production would call {@code createContext} on the provider's raw
@@ -20,9 +21,11 @@ import jakarta.jms.ConnectionFactory;
  *
  * <p>The properties that matter for CDI:</p>
  * <ul>
- *   <li>The bean is qualified with {@link Caching}, so it does not compete with the application's
- *       raw {@code ConnectionFactory} bean. A CDI module consumer asks for it explicitly:
- *       {@code @Inject @Caching CachingConnectionFactory}.</li>
+ *   <li>The bean is {@link Typed} to {@link CachingConnectionFactory} alone, so it is not a
+ *       {@code ConnectionFactory} bean. The application's raw {@code ConnectionFactory} stays the
+ *       only bean of that type, so producers that need the provider factory keep resolving it
+ *       without an ambiguity. A consumer asks for the caching factory by its concrete type:
+ *       {@code @Inject CachingConnectionFactory}.</li>
  *   <li>It is {@link Singleton} rather than {@code @ApplicationScoped} on purpose. The factory is
  *       a <em>final</em> class, which a normal scope cannot proxy, and the shared instance has no
  *       state a proxy would have to protect: {@code CachingConnectionFactory} is thread-safe on
@@ -48,7 +51,7 @@ public class CachingConnectionFactoryProducer {
      *                               only fires when the caching factory is requested directly
      */
     @Produces
-    @Caching
+    @Typed(CachingConnectionFactory.class)
     @Singleton
     public CachingConnectionFactory produceCachingConnectionFactory() {
         if (connectionFactories.isUnsatisfied()) {
@@ -61,7 +64,7 @@ public class CachingConnectionFactoryProducer {
         return target instanceof CachingConnectionFactory caching ? caching : new CachingConnectionFactory(target);
     }
 
-    void disposeCachingConnectionFactory(@Disposes @Caching CachingConnectionFactory connectionFactory) {
+    void disposeCachingConnectionFactory(@Disposes CachingConnectionFactory connectionFactory) {
         connectionFactory.close();
     }
 }

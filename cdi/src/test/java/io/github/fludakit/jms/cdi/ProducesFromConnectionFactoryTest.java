@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Without a context bean the client is built from the {@code @Caching} factory produced by
+ * Without a context bean the client is built from the caching factory produced by
  * {@link CachingConnectionFactoryProducer}: two clients on the same thread share one JMSContext -
  * one connection - even though every client is a fresh {@code @Dependent} instance.
  */
@@ -38,7 +38,6 @@ class ProducesFromConnectionFactoryTest {
     Instance<JmsClient> clients;
 
     @Inject
-    @Caching
     CachingConnectionFactory cachingConnectionFactory;
 
     @Test
