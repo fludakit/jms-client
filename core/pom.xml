@@ -86,13 +86,11 @@
                             <goal>add-module-info</goal>
                         </goals>
                         <configuration>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
                             <module>
-                                <moduleInfo>
-                                    <name>fluda.jms.client.core</name>
-                                    <exports>
-                                        io.github.fludakit.jms;
-                                    </exports>
-                                </moduleInfo>
+                                <!-- explicit descriptor: JSON-B is `requires static`, which jdeps
+                                     cannot express when it generates the module-info -->
+                                <moduleInfoFile>${project.basedir}/src/main/module/module-info.java</moduleInfoFile>
                             </module>
                         </configuration>
                     </execution>

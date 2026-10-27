@@ -11,7 +11,9 @@ import jakarta.json.bind.JsonbBuilder;
 
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Objects;
@@ -164,19 +166,25 @@ class JsonbMessageConverterTest {
 
     @Test
     void loadsSafelyWithoutAnyJsonbAtAll() throws Exception {
-        // a class loader that sees neither the JSON-B API nor an implementation: the facade has
-        // no JSON-B imports, so it LOADS and isAvailable-style probing is unnecessary -
-        // construction fails fast with a JmsClientException instead of a NoClassDefFoundError
+        // a class loader that sees neither the JSON-B API nor an implementation: the converter
+        // names JSON-B types only inline in method bodies and in no catch clause, so it LINKS
+        // without them - construction fails fast with a JmsClientException instead of a
+        // NoClassDefFoundError from a class-load
         try (URLClassLoader noJsonb = new URLClassLoader(
                 new URL[]{codeSource(JMSContext.class), codeSource(JmsClientException.class)},
                 ClassLoader.getPlatformClassLoader())) {
             Class<?> isolated = Class.forName(JsonbMessageConverter.class.getName(), false, noJsonb);
+            Class<?> isolatedException = Class.forName(JmsClientException.class.getName(), false, noJsonb);
 
-            InvocationTargetException thrown = assertThrows(InvocationTargetException.class,
-                    () -> isolated.getConstructor().newInstance());
-            assertInstanceOf(JmsClientException.class, thrown.getCause());
-            assertTrue(thrown.getCause().getMessage().contains("JSON Binding provider"),
-                    thrown.getCause().getMessage());
+            // a method handle resolves only the no-arg constructor; reflective enumeration would
+            // fail because the public API also names Jsonb
+            MethodHandle constructor = MethodHandles.lookup()
+                    .findConstructor(isolated, MethodType.methodType(void.class));
+            Throwable thrown = assertThrows(Throwable.class, () -> constructor.invoke());
+            // the isolated loader defines its own JmsClientException, so compare by type identity there
+            assertTrue(isolatedException.isInstance(thrown),
+                    "expected " + isolatedException.getName() + " but was " + thrown);
+            assertTrue(thrown.getMessage().contains("JSON Binding provider"), thrown.getMessage());
         }
     }
 
