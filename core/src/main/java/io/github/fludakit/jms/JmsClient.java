@@ -1,10 +1,17 @@
 package io.github.fludakit.jms;
 
 import io.github.fludakit.jms.support.DestinationResolver;
-import io.github.fludakit.jms.support.SimpleDestinationResolver;
 import io.github.fludakit.jms.support.MessageConverter;
+import io.github.fludakit.jms.support.SimpleDestinationResolver;
 import io.github.fludakit.jms.support.SimpleMessageConverter;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
@@ -15,14 +22,6 @@ import jakarta.jms.Message;
 import jakarta.jms.Queue;
 import jakarta.jms.QueueBrowser;
 import jakarta.jms.Session;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A fluent JMS client for sending and receiving messages - comparable to Spring's {@code JmsClient}.
@@ -70,7 +69,9 @@ public class JmsClient {
         return new Builder(Objects.requireNonNull(connectionFactory, "connectionFactory must not be null"));
     }
 
-    /** Starts building a client around an existing (possibly container-injected) JMSContext. */
+    /**
+     * Starts building a client around an existing (possibly container-injected) JMSContext.
+     */
     public static Builder builder(JMSContext context) {
         return new Builder(Objects.requireNonNull(context, "context must not be null"));
     }
@@ -87,7 +88,9 @@ public class JmsClient {
         return new DestinationSpec(destinationResolver.resolveDestination(context, name));
     }
 
-    /** Targets an explicit {@link Destination} (queue or topic) for subsequent operations. */
+    /**
+     * Targets an explicit {@link Destination} (queue or topic) for subsequent operations.
+     */
     public DestinationSpec destination(Destination destination) {
         return new DestinationSpec(Objects.requireNonNull(destination, "destination must not be null"));
     }
@@ -106,7 +109,9 @@ public class JmsClient {
         return destination(defaultDestinationName);
     }
 
-    /** The {@link MessageConverter} this client converts payloads with. */
+    /**
+     * The {@link MessageConverter} this client converts payloads with.
+     */
     public MessageConverter getMessageConverter() {
         return converter;
     }
@@ -124,9 +129,12 @@ public class JmsClient {
             this.destination = destination;
         }
 
-        /** Converts the payload and sends it to the destination. */
+        /**
+         * Converts the payload and sends it to the destination.
+         */
         public void send(Object payload) {
-            send(payload, m -> { });
+            send(payload, m -> {
+            });
         }
 
         /**
@@ -234,7 +242,7 @@ public class JmsClient {
                     results.add(mapper.apply((Message) elements.nextElement()));
                 }
                 return results;
-            } catch ( JMSException e) {
+            } catch (JMSException e) {
                 throw new JmsClientException(JmsClientException.Code.RECEIVE,
                         "Failed to browse the queue", e);
             }
@@ -347,13 +355,17 @@ public class JmsClient {
             return this;
         }
 
-        /** Sets the default destination name for {@link JmsClient#destination()} operations. */
+        /**
+         * Sets the default destination name for {@link JmsClient#destination()} operations.
+         */
         public Builder defaultDestination(String defaultDestinationName) {
             this.defaultDestinationName = defaultDestinationName;
             return this;
         }
 
-        /** Sets the MessageConverter (default {@link SimpleMessageConverter}). */
+        /**
+         * Sets the MessageConverter (default {@link SimpleMessageConverter}).
+         */
         public Builder messageConverter(MessageConverter converter) {
             this.converter = Objects.requireNonNull(converter, "converter must not be null");
             return this;
@@ -377,8 +389,7 @@ public class JmsClient {
          */
         public JmsClient build() {
             JMSContext jmsContext = connectionFactory != null ? createContext() : context;
-            return new JmsClient(jmsContext, connectionFactory != null, converter,
-                    destinationResolver, defaultDestinationName);
+            return new JmsClient(jmsContext, converter, destinationResolver, defaultDestinationName);
         }
 
         private JMSContext createContext() {
