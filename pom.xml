@@ -49,6 +49,7 @@
         <!-- Module-specific properties can be added here -->
         <artemis.version>2.40.0</artemis.version>
         <qpid-jms.version>2.7.0</qpid-jms.version>
+        <yasson.version>3.0.5</yasson.version>
         <fluda-jms-client.version>1.0.0-SNAPSHOT</fluda-jms-client.version>
     </properties>
 
@@ -70,6 +71,11 @@
                 <groupId>org.apache.qpid</groupId>
                 <artifactId>qpid-jms-client</artifactId>
                 <version>${qpid-jms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse</groupId>
+                <artifactId>yasson</artifactId>
+                <version>${yasson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

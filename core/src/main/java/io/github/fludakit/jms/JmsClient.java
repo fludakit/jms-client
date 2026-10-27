@@ -1,10 +1,17 @@
 package io.github.fludakit.jms;
 
 import io.github.fludakit.jms.support.DestinationResolver;
-import io.github.fludakit.jms.support.SimpleDestinationResolver;
 import io.github.fludakit.jms.support.MessageConverter;
+import io.github.fludakit.jms.support.SimpleDestinationResolver;
 import io.github.fludakit.jms.support.SimpleMessageConverter;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
@@ -16,14 +23,6 @@ import jakarta.jms.Queue;
 import jakarta.jms.QueueBrowser;
 import jakarta.jms.Session;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 /**
  * A fluent JMS client for sending and receiving messages - comparable to Spring's {@code JmsClient}.
  *
@@ -33,8 +32,6 @@ import java.util.function.Function;
  * client.destination("orders").send(order);                       // payload via MessageConverter
  * client.destination("orders").send(m -> JmsMessages.setStringProperty(m, "source", "test")); // raw message
  * Order order = client.destination("orders").receive(Order.class, Duration.ofSeconds(5));
- *
- * client.close();
  * }</pre>
  *
  * <p>The client operates on a {@link JMSContext} (the JMS 2.0+ simplified API): created from the
@@ -42,23 +39,21 @@ import java.util.function.Function;
  * Jakarta EE. A {@code JmsClient} is <b>not thread-safe</b> - it shares one JMSContext across
  * all its operations; for concurrent producers or consumers, create one client per thread.</p>
  *
- * <p>Implements {@link AutoCloseable}. The client owns the context it created from a
- * ConnectionFactory and closes it; a context handed in by the caller (an injected,
- * container-managed one) belongs to that caller and is left open - the container decides when it
- * goes away.</p>
+ * <p>The client does <b>not</b> manage the JMSContext lifecycle - creating, closing and caching
+ * the context belongs to the application (or the CDI container for an injected context).
+ * Applications that need explicit cleanup create the context themselves via
+ * {@code connectionFactory.createContext(...)} and use {@link #builder(JMSContext)}.</p>
  */
-public class JmsClient implements AutoCloseable {
+public class JmsClient {
 
     private final JMSContext context;
-    private final boolean ownsContext;
     private final MessageConverter converter;
     private final DestinationResolver destinationResolver;
     private final String defaultDestinationName;
 
-    private JmsClient(JMSContext context, boolean ownsContext, MessageConverter converter,
+    private JmsClient(JMSContext context, MessageConverter converter,
                       DestinationResolver destinationResolver, String defaultDestinationName) {
         this.context = Objects.requireNonNull(context, "context must not be null");
-        this.ownsContext = ownsContext;
         this.converter = Objects.requireNonNull(converter, "converter must not be null");
         this.destinationResolver = Objects.requireNonNull(destinationResolver, "destinationResolver must not be null");
         this.defaultDestinationName = defaultDestinationName;
@@ -67,14 +62,16 @@ public class JmsClient implements AutoCloseable {
     /**
      * Starts building a client for the supplied ConnectionFactory (Java SE usage): {@link
      * Builder#build()} creates the JMSContext through the ConnectionFactory with the builder's
-     * credentials and session mode (default {@code AUTO_ACKNOWLEDGE}), and the client closes it on
-     * {@link #close()}.
+     * credentials and session mode (default {@code AUTO_ACKNOWLEDGE}). The context lifecycle
+     * belongs to the application.
      */
     public static Builder builder(ConnectionFactory connectionFactory) {
         return new Builder(Objects.requireNonNull(connectionFactory, "connectionFactory must not be null"));
     }
 
-    /** Starts building a client around an existing (possibly container-injected) JMSContext. */
+    /**
+     * Starts building a client around an existing (possibly container-injected) JMSContext.
+     */
     public static Builder builder(JMSContext context) {
         return new Builder(Objects.requireNonNull(context, "context must not be null"));
     }
@@ -91,7 +88,9 @@ public class JmsClient implements AutoCloseable {
         return new DestinationSpec(destinationResolver.resolveDestination(context, name));
     }
 
-    /** Targets an explicit {@link Destination} (queue or topic) for subsequent operations. */
+    /**
+     * Targets an explicit {@link Destination} (queue or topic) for subsequent operations.
+     */
     public DestinationSpec destination(Destination destination) {
         return new DestinationSpec(Objects.requireNonNull(destination, "destination must not be null"));
     }
@@ -110,21 +109,11 @@ public class JmsClient implements AutoCloseable {
         return destination(defaultDestinationName);
     }
 
-    /** The {@link MessageConverter} this client converts payloads with. */
+    /**
+     * The {@link MessageConverter} this client converts payloads with.
+     */
     public MessageConverter getMessageConverter() {
         return converter;
-    }
-
-    /**
-     * Closes the underlying JMSContext when this client created it from a ConnectionFactory.
-     * A context passed to {@link #builder(JMSContext)} is left open for its owner (the container,
-     * or the application code that created it).
-     */
-    @Override
-    public void close() {
-        if (ownsContext) {
-            context.close();
-        }
     }
 
     /**
@@ -140,9 +129,12 @@ public class JmsClient implements AutoCloseable {
             this.destination = destination;
         }
 
-        /** Converts the payload and sends it to the destination. */
+        /**
+         * Converts the payload and sends it to the destination.
+         */
         public void send(Object payload) {
-            send(payload, m -> { });
+            send(payload, m -> {
+            });
         }
 
         /**
@@ -250,7 +242,7 @@ public class JmsClient implements AutoCloseable {
                     results.add(mapper.apply((Message) elements.nextElement()));
                 }
                 return results;
-            } catch ( JMSException e) {
+            } catch (JMSException e) {
                 throw new JmsClientException(JmsClientException.Code.RECEIVE,
                         "Failed to browse the queue", e);
             }
@@ -268,13 +260,7 @@ public class JmsClient implements AutoCloseable {
         }
 
         private <T> T convert(Message message, Class<T> payloadType) {
-            Object value = converter.fromMessage(message);
-            if (!payloadType.isInstance(value)) {
-                throw new JmsClientException(JmsClientException.Code.CONVERSION,
-                        "Converted payload of type " + value.getClass().getName()
-                                + " is not assignable to " + payloadType.getName());
-            }
-            return payloadType.cast(value);
+            return converter.fromMessage(message, payloadType);
         }
     }
 
@@ -369,13 +355,17 @@ public class JmsClient implements AutoCloseable {
             return this;
         }
 
-        /** Sets the default destination name for {@link JmsClient#destination()} operations. */
+        /**
+         * Sets the default destination name for {@link JmsClient#destination()} operations.
+         */
         public Builder defaultDestination(String defaultDestinationName) {
             this.defaultDestinationName = defaultDestinationName;
             return this;
         }
 
-        /** Sets the MessageConverter (default {@link SimpleMessageConverter}). */
+        /**
+         * Sets the MessageConverter (default {@link SimpleMessageConverter}).
+         */
         public Builder messageConverter(MessageConverter converter) {
             this.converter = Objects.requireNonNull(converter, "converter must not be null");
             return this;
@@ -399,8 +389,7 @@ public class JmsClient implements AutoCloseable {
          */
         public JmsClient build() {
             JMSContext jmsContext = connectionFactory != null ? createContext() : context;
-            return new JmsClient(jmsContext, connectionFactory != null, converter,
-                    destinationResolver, defaultDestinationName);
+            return new JmsClient(jmsContext, converter, destinationResolver, defaultDestinationName);
         }
 
         private JMSContext createContext() {

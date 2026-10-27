@@ -48,15 +48,6 @@ class QpidJmsClientTest {
         }
     }
 
-    @AfterEach
-    void closeClients() {
-        try {
-            qpidClient.close();
-        } finally {
-            nativeClient.close();
-        }
-    }
-
     @Test
     void sendAndReceiveOverAmqp() {
         qpidClient.destination("test.queue").send("hello via amqp");

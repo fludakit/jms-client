@@ -42,11 +42,6 @@ class ArtemisNativeJmsClientTest {
         }
     }
 
-    @AfterEach
-    void closeClient() {
-        client.close();
-    }
-
     @Test
     void sendAndReceiveText() {
         client.destination("test.queue").send("hello artemis");

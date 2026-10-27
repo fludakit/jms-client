@@ -40,7 +40,7 @@ class JmsClientBuilderTest {
     }
 
     @Test
-    void factoryBasedBuilderCreatesTheContextOnBuildAndClosesIt() {
+    void factoryBasedBuilderCreatesTheContextOnBuild() {
         when(connectionFactory.createContext(anyInt())).thenReturn(context);
 
         JmsClient.Builder builder = JmsClient.builder(connectionFactory);
@@ -49,19 +49,15 @@ class JmsClientBuilderTest {
 
         JmsClient client = builder.build();
         verify(connectionFactory, times(1)).createContext(Session.AUTO_ACKNOWLEDGE);
-
-        client.close();
-        verify(context, times(1)).close();
     }
 
     @Test
-    void contextBasedClientLeavesTheInjectedContextOpen() {
+    void contextBasedBuilderUsesTheInjectedContext() {
         JmsClient client = JmsClient.builder(context).build();
 
+        // the context belongs to the container/application that created it - the client never
+        // touches its lifecycle
         verifyNoInteractions(context);
-        client.close();
-        // the context belongs to the container/application that created it
-        verify(context, never()).close();
     }
 
     @Test
@@ -73,7 +69,6 @@ class JmsClientBuilderTest {
         ArgumentCaptor<Integer> sessionMode = ArgumentCaptor.forClass(Integer.class);
         verify(connectionFactory, times(1)).createContext(sessionMode.capture());
         assertEquals(Session.AUTO_ACKNOWLEDGE, sessionMode.getValue());
-        client.close();
     }
 
     @Test
@@ -85,7 +80,6 @@ class JmsClientBuilderTest {
                 .build();
 
         verify(connectionFactory, times(1)).createContext(Session.CLIENT_ACKNOWLEDGE);
-        client.close();
     }
 
     @Test
@@ -106,7 +100,6 @@ class JmsClientBuilderTest {
 
         verify(connectionFactory, times(1)).createContext("artemis", "secret", Session.AUTO_ACKNOWLEDGE);
         verify(connectionFactory, never()).createContext(anyInt());
-        client.close();
     }
 
     @Test
@@ -116,7 +109,6 @@ class JmsClientBuilderTest {
         JmsClient client = JmsClient.builder(connectionFactory).username("artemis").build();
 
         verify(connectionFactory, times(1)).createContext("artemis", "", Session.AUTO_ACKNOWLEDGE);
-        client.close();
     }
 
     @Test
@@ -132,7 +124,6 @@ class JmsClientBuilderTest {
         JmsClient client = JmsClient.builder(connectionFactory).config(config).build();
 
         verify(connectionFactory, times(1)).createContext("artemis", "secret", Session.DUPS_OK_ACKNOWLEDGE);
-        client.close();
     }
 
     @Test
