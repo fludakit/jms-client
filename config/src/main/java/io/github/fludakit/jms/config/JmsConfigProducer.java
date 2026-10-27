@@ -31,10 +31,10 @@ public class JmsConfigProducer {
     @Singleton
     public JmsConfig produce() {
         return JmsConfig.builder()
-                .username(nullIfBlank(properties.username()))
-                .password(nullIfBlank(properties.password()))
-                .sessionMode(AcknowledgeMode.from(properties.acknowledgeMode()).sessionMode())
-                .defaultDestination(nullIfBlank(properties.defaultDestination()))
+                .username(nullIfBlank(properties.username.orElse(null)))
+                .password(nullIfBlank(properties.password.orElse(null)))
+                .sessionMode(AcknowledgeMode.from(properties.acknowledgeMode.orElse(null)).sessionMode())
+                .defaultDestination(nullIfBlank(properties.defaultDestination.orElse(null)))
                 .build();
     }
 

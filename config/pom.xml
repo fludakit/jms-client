@@ -15,7 +15,8 @@
     <packaging>jar</packaging>
 
     <name>FluDa :: Jms Client :: Config</name>
-    <description>MicroProfile Config mapping (fluda.jms.*) and the assembled JmsConfig CDI bean.</description>
+    <description>MicroProfile Config mapping (fluda.jms.*) to JmsConfig, plus Artemis/Qpid connection
+        factories built from their provider sections.</description>
 
     <dependencies>
         <dependency>
@@ -36,6 +37,17 @@
             <groupId>org.eclipse.microprofile.config</groupId>
             <artifactId>microprofile-config-api</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <!-- Optional: only the provider whose section is configured is needed at runtime. -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jakarta-client</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.qpid</groupId>
+            <artifactId>qpid-jms-client</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>

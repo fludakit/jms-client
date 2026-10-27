@@ -1,6 +1,7 @@
 package io.github.fludakit.jms.cdi;
 
 import io.github.fludakit.jms.CachingConnectionFactory;
+import io.github.fludakit.jms.support.ConnectionFactorySource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Instance;
@@ -10,14 +11,26 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.jms.ConnectionFactory;
 
+import java.util.Optional;
+
 /**
  * Produces the {@link CachingConnectionFactory} that backs every
- * {@link io.github.fludakit.jms.JmsClient} built from a {@link ConnectionFactory} bean.
+ * {@link io.github.fludakit.jms.JmsClient} built from a connection factory.
  *
  * <p>Without it, every client production would call {@code createContext} on the provider's raw
  * factory and open a connection that {@code JmsClient} never closes (the client does not own the
  * context). With it, the context of the calling thread is reused across clients - see
  * {@link CachingConnectionFactory}.</p>
+ *
+ * <h2>Which factory is cached</h2>
+ * <p>The raw factory is resolved once, in this order:</p>
+ * <ol>
+ *   <li>the application's {@link ConnectionFactory} bean;</li>
+ *   <li>the first {@link ConnectionFactorySource} bean that has something configured - the
+ *       {@code config} module contributes one, which builds the Artemis or Qpid factory from the
+ *       {@code fluda.jms.artemis.*} / {@code fluda.jms.qpid.*} section when that client is on the
+ *       classpath.</li>
+ * </ol>
  *
  * <p>The properties that matter for CDI:</p>
  * <ul>
@@ -43,28 +56,45 @@ public class CachingConnectionFactoryProducer {
     @Inject
     Instance<ConnectionFactory> connectionFactories;
 
+    @Inject
+    Instance<ConnectionFactorySource> connectionFactorySources;
+
     /**
      * Produces the one caching factory of the application.
      *
-     * @throws IllegalStateException when no {@link ConnectionFactory} bean is available; the
-     *                               client producer reports the missing resources itself, so this
-     *                               only fires when the caching factory is requested directly
+     * @throws IllegalStateException when no {@link ConnectionFactory} bean and no configured
+     *                               {@link ConnectionFactorySource} is available
      */
     @Produces
     @Typed(CachingConnectionFactory.class)
     @Singleton
     public CachingConnectionFactory produceCachingConnectionFactory() {
-        if (connectionFactories.isUnsatisfied()) {
-            throw new IllegalStateException(
-                    "No jakarta.jms.ConnectionFactory bean available: produce one (e.g. the"
-                            + " Artemis or Qpid factory configured with your broker's URL) or inject"
-                            + " a jakarta.jms.JMSContext instead");
-        }
-        ConnectionFactory target = connectionFactories.get();
+        ConnectionFactory target = rawConnectionFactory();
         return target instanceof CachingConnectionFactory caching ? caching : new CachingConnectionFactory(target);
     }
 
     void disposeCachingConnectionFactory(@Disposes CachingConnectionFactory connectionFactory) {
         connectionFactory.close();
+    }
+
+    private ConnectionFactory rawConnectionFactory() {
+        if (!connectionFactories.isUnsatisfied()) {
+            return connectionFactories.get();
+        }
+
+        for (ConnectionFactorySource source : connectionFactorySources) {
+            Optional<ConnectionFactory> factory = source.resolve();
+            if (factory.isPresent()) {
+                return factory.get();
+            }
+        }
+
+        throw new IllegalStateException(
+                "No JMS resources available: provide a jakarta.jms.JMSContext bean (a"
+                        + " container-managed context, as on Jakarta EE), a"
+                        + " jakarta.jms.ConnectionFactory bean, or configure a provider section -"
+                        + " fluda.jms.artemis.broker-url or fluda.jms.qpid.remote-url - with that"
+                        + " provider's client on the classpath; optionally add a JmsConfig bean for"
+                        + " credentials and the default destination");
     }
 }
