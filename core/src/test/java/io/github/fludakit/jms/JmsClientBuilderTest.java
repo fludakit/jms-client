@@ -43,8 +43,8 @@ class JmsClientBuilderTest {
     void factoryBasedBuilderCreatesTheContextOnBuild() {
         when(connectionFactory.createContext(anyInt())).thenReturn(context);
 
-        JmsClient.Builder builder = JmsClient.builder(connectionFactory);
-        // building the client is what opens the connection, so an abandoned builder leaks nothing
+        JmsClient.ConnectionFactorySpec builder = JmsClient.builder(connectionFactory);
+        // building the client is what opens the connection, so an abandoned spec leaks nothing
         verifyNoInteractions(connectionFactory);
 
         JmsClient client = builder.build();
