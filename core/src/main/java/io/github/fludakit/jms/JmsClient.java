@@ -42,7 +42,10 @@ import jakarta.jms.Session;
  * <p>The client does <b>not</b> manage the JMSContext lifecycle - creating, closing and caching
  * the context belongs to the application (or the CDI container for an injected context).
  * Applications that need explicit cleanup create the context themselves via
- * {@code connectionFactory.createContext(...)} and use {@link #builder(JMSContext)}.</p>
+ * {@code connectionFactory.createContext(...)} and use {@link #builder(JMSContext)}. A Java SE
+ * application that wants one connection reused across clients should wrap its factory in
+ * {@link CachingConnectionFactory}: it caches a context per thread and leaves this client's API
+ * unchanged.</p>
  *
  * <p><b>Jakarta EE:</b> no client configuration is involved at all. The application declares its
  * resources ({@code @JMSConnectionFactoryDefinition} / {@code @JMSDestinationDefinition}, or the
@@ -83,6 +86,9 @@ public class JmsClient {
      * {@link ConnectionFactorySpec#build()} creates the JMSContext through the factory with the
      * spec's credentials and session mode (default {@code AUTO_ACKNOWLEDGE}). The context lifecycle
      * belongs to the application.
+     *
+     * <p>Wrap a raw factory in {@link CachingConnectionFactory} to reuse one context - and one
+     * connection - per thread across clients; this method takes either kind of factory.</p>
      */
     public static ConnectionFactorySpec builder(ConnectionFactory connectionFactory) {
         return new ConnectionFactorySpec(Objects.requireNonNull(connectionFactory, "connectionFactory must not be null"));
@@ -371,6 +377,10 @@ public class JmsClient {
      * Builder for a client that creates its own JMSContext from a {@link ConnectionFactory} (Java
      * SE usage): {@link #build()} calls {@code createContext} with the configured credentials and
      * session mode. The context lifecycle belongs to the application.
+     *
+     * <p>With a raw factory each client opens its own connection, because the client never closes
+     * the context. Pass a {@link CachingConnectionFactory} instead to reuse one context per thread
+     * - the credentials and session mode configured here become part of its cache key.</p>
      */
     public static final class ConnectionFactorySpec extends AbstractJmsClientSpec<ConnectionFactorySpec> {
 

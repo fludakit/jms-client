@@ -2,6 +2,8 @@ package io.github.fludakit.jms;
 
 import io.github.fludakit.jms.support.JmsMessages;
 
+import jakarta.jms.JMSContext;
+
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +17,8 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,8 +35,10 @@ class ArtemisNativeJmsClientTest {
     public record Order(String id) implements Serializable {
     }
 
-    private final JmsClient client = JmsClient.builder(new ActiveMQJMSConnectionFactory(
-            artemis.getBrokerUrl(), artemis.getUser(), artemis.getPassword())).build();
+    private final ActiveMQJMSConnectionFactory connectionFactory = new ActiveMQJMSConnectionFactory(
+            artemis.getBrokerUrl(), artemis.getUser(), artemis.getPassword());
+
+    private final JmsClient client = JmsClient.builder(connectionFactory).build();
 
     @BeforeEach
     void drainTestQueue() {
@@ -100,5 +106,51 @@ class ArtemisNativeJmsClientTest {
                 .browse(m -> JmsMessages.stringProperty(m, "traceId"))
                 .getFirst();
         assertEquals("abc-123", traceId);
+    }
+
+    @Test
+    void aCachedContextIsReusedAcrossClientsAndStillSendsAndReceives() {
+        try (CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory)) {
+            // the intended shape: one cached context per thread, a client per operation
+            JMSContext context = caching.createContext();
+            assertSame(context, caching.createContext());
+
+            JmsClient sender = JmsClient.builder(caching).build();
+            JmsClient receiver = JmsClient.builder(caching).build();
+
+            sender.destination("test.queue").send("cached hello");
+
+            assertEquals("cached hello",
+                    receiver.destination("test.queue").receive(String.class, Duration.ofSeconds(5)));
+        }
+    }
+
+    @Test
+    void closingAContextOfAClientKeepsTheCachedConnectionAlive() {
+        try (CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory)) {
+            caching.createContext().close(); // a no-op: the factory owns the context
+
+            JmsClient client = JmsClient.builder(caching).build();
+            client.destination("test.queue").send("after close");
+
+            assertEquals("after close",
+                    client.destination("test.queue").receive(String.class, Duration.ofSeconds(5)));
+        }
+    }
+
+    @Test
+    void aResetCachedContextIsReplacedByAWorkingOne() {
+        try (CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory)) {
+            JMSContext before = caching.createContext();
+            caching.reset();
+
+            JMSContext after = caching.createContext();
+            assertNotSame(before, after);
+
+            JmsClient client = JmsClient.builder(caching).build();
+            client.destination("test.queue").send("after reset");
+            assertEquals("after reset",
+                    client.destination("test.queue").receive(String.class, Duration.ofSeconds(5)));
+        }
     }
 }
