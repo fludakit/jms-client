@@ -43,6 +43,7 @@
 
     <modules>
         <module>core</module>
+        <module>cdi</module>
     </modules>
 
     <properties>
@@ -60,6 +61,11 @@
             <dependency>
                 <groupId>io.github.fludakit</groupId>
                 <artifactId>fluda-jms-client-core</artifactId>
+                <version>${fluda-jms-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.fludakit</groupId>
+                <artifactId>fluda-jms-client-cdi</artifactId>
                 <version>${fluda-jms-client.version}</version>
             </dependency>
             <dependency>
