@@ -43,6 +43,15 @@ import jakarta.jms.Session;
  * the context belongs to the application (or the CDI container for an injected context).
  * Applications that need explicit cleanup create the context themselves via
  * {@code connectionFactory.createContext(...)} and use {@link #builder(JMSContext)}.</p>
+ *
+ * <p><b>Jakarta EE:</b> no client configuration is involved at all. The application declares its
+ * resources ({@code @JMSConnectionFactoryDefinition} / {@code @JMSDestinationDefinition}, or the
+ * equivalent deployment descriptors), injects them with {@code @Resource}, and passes the injected
+ * context to {@link #builder(JMSContext)}. Destinations are injected as {@link Destination}
+ * objects and handed to {@link #destination(Destination)} - naming a destination would resolve it
+ * through the context instead, which ignores the resource definition (its address, its queue-vs-topic
+ * kind and any provider-specific settings). Credentials, session mode and a default destination
+ * name are meaningless there: the container owns them.</p>
  */
 public class JmsClient {
 
@@ -281,7 +290,12 @@ public class JmsClient {
         }
 
         /**
-         * Sets the default destination name for {@link JmsClient#destination()} operations.
+         * Sets a default destination name for the convenience {@link JmsClient#destination()}
+         * operation.
+         *
+         * <p><b>Optional</b> - and usually left unset: callers normally name the destination per
+         * call ({@link JmsClient#destination(String)}) or pass one they already hold
+         * ({@link JmsClient#destination(Destination)}). Nothing else in the client depends on it.</p>
          */
         public final S defaultDestination(String defaultDestinationName) {
             this.defaultDestinationName = defaultDestinationName;
