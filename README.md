@@ -19,9 +19,7 @@ v1 is implemented - see [issue #1](../../issues/1) for the requirements plan and
 | `fluda-jms-client-cdi` | CDI producers for `JmsClient` and `CachingConnectionFactory` |
 | `fluda-jms-client-config` | MicroProfile Config `fluda.jms.*` -> `JmsConfig`, and Artemis/Qpid connection factories |
 
-All modules share one version. In plain Java SE, add `fluda-jms-client-core`; for CDI add
-`fluda-jms-client-cdi` (and `fluda-jms-client-config` to build the connection factory from
-properties), plus the client of the provider you use:
+All modules share one version. Add `fluda-jms-client-core` for plain Java SE:
 
 ```xml
 <dependency>
@@ -30,6 +28,10 @@ properties), plus the client of the provider you use:
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
+
+For CDI, add `fluda-jms-client-cdi` - plus `fluda-jms-client-config` when the connection factory
+should come from properties - and the client of the provider you use (`artemis-jakarta-client` or
+`qpid-jms-client`).
 
 ## Usage
 
