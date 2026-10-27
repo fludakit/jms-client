@@ -14,8 +14,8 @@ import java.util.Optional;
  * <ul>
  *   <li>{@code fluda.jms.username} - broker username; unset or blank means anonymous access</li>
  *   <li>{@code fluda.jms.password} - broker password; unset or blank means no password</li>
- *   <li>{@code fluda.jms.acknowledge-mode} - {@code auto-acknowledge} (default),
- *       {@code client-acknowledge} or {@code dups-ok-acknowledge}</li>
+ *   <li>{@code fluda.jms.acknowledge-mode} - {@code auto} (default), {@code client} or
+ *       {@code dups-ok}, the same short values as Spring Boot's JMS starter</li>
  *   <li>{@code fluda.jms.default-destination} - optional destination <em>name</em>, used when an
  *       operation does not name one (see {@code JmsClient#destination()})</li>
  * </ul>

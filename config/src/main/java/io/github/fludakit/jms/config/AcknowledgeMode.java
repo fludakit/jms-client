@@ -8,16 +8,19 @@ import java.util.Locale;
  * The {@code fluda.jms.acknowledge-mode} values, mapped to the {@link Session} constants that
  * {@link io.github.fludakit.jms.JmsConfig} carries.
  *
- * <p>Values are matched case-insensitively, and {@code _} is accepted for {@code -} so a copied
- * {@code Session.AUTO_ACKNOWLEDGE} constant name also works. A missing value means
- * {@code auto-acknowledge}. {@code session-transacted} is rejected on purpose: the fluent client
- * never issues a commit, so a transacted context would roll back on close.</p>
+ * <p>The values follow Spring Boot's {@code spring.jms.template.session.acknowledge-mode}: the
+ * short names {@code auto} (the default), {@code client} and {@code dups-ok}, matched
+ * case-insensitively, with {@code _} accepted for {@code -}. A missing value means
+ * {@code auto}. A transacted session is not a mode here, exactly as in Spring Boot, where it is
+ * the separate {@code transacted} flag: the fluent client never issues a commit, so a transacted
+ * context would roll back on close - use an injected {@code JMSContext} and transact around it
+ * instead.</p>
  */
 enum AcknowledgeMode {
 
-    AUTO("auto-acknowledge", Session.AUTO_ACKNOWLEDGE),
-    CLIENT("client-acknowledge", Session.CLIENT_ACKNOWLEDGE),
-    DUPS_OK("dups-ok-acknowledge", Session.DUPS_OK_ACKNOWLEDGE);
+    AUTO("auto", Session.AUTO_ACKNOWLEDGE),
+    CLIENT("client", Session.CLIENT_ACKNOWLEDGE),
+    DUPS_OK("dups-ok", Session.DUPS_OK_ACKNOWLEDGE);
 
     private final String propertyValue;
     private final int sessionMode;
@@ -35,7 +38,7 @@ enum AcknowledgeMode {
     /**
      * Resolves a property value.
      *
-     * @throws IllegalArgumentException for an unknown value, or for {@code session-transacted}
+     * @throws IllegalArgumentException for an unknown value, or for a transacted session
      */
     static AcknowledgeMode from(String value) {
         String normalized = value == null
@@ -53,12 +56,12 @@ enum AcknowledgeMode {
     }
 
     private static String unknownMessage(String value, String normalized) {
-        if ("session-transacted".equals(normalized)) {
-            return "fluda.jms.acknowledge-mode=session-transacted is not supported: the client never"
+        if ("transacted".equals(normalized) || "session-transacted".equals(normalized)) {
+            return "fluda.jms.acknowledge-mode=" + value + " is not supported: the client never"
                     + " commits, so a transacted context would roll back on close; use an injected"
                     + " JMSContext and transact around it instead";
         }
-        return "Unknown fluda.jms.acknowledge-mode '" + value + "'; expected auto-acknowledge,"
-                + " client-acknowledge or dups-ok-acknowledge";
+        return "Unknown fluda.jms.acknowledge-mode '" + value + "'; expected auto, client or"
+                + " dups-ok";
     }
 }
