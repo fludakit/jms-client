@@ -50,8 +50,18 @@ import jakarta.jms.Session;
  * context to {@link #builder(JMSContext)}. Destinations are injected as {@link Destination}
  * objects and handed to {@link #destination(Destination)} - naming a destination would resolve it
  * through the context instead, which ignores the resource definition (its address, its queue-vs-topic
- * kind and any provider-specific settings). Credentials, session mode and a default destination
- * name are meaningless there: the container owns them.</p>
+ * kind and any provider-specific settings). Credentials and session mode are meaningless there:
+ * the container owns them.</p>
+ *
+ * <p><b>The default destination is an exception worth knowing about:</b> it is always a
+ * <i>name</i>, so {@link #destination()} resolves it through the
+ * {@link DestinationResolver} like any other name - including on Jakarta EE, where the default
+ * resolver creates the destination from the injected context instead of looking up the resource.
+ * {@code defaultDestination("orders")} therefore gives you the context's view of a destination
+ * named {@code orders}, not the destination an application server was configured with. That is
+ * fine when the two coincide; when the resource definition matters (a specific address, a topic,
+ * a provider-specific setting), keep {@code destination()} for Java SE convenience and pass the
+ * injected {@link Destination} explicitly: {@code client.destination(orders)}.</p>
  */
 public class JmsClient {
 
@@ -296,6 +306,13 @@ public class JmsClient {
          * <p><b>Optional</b> - and usually left unset: callers normally name the destination per
          * call ({@link JmsClient#destination(String)}) or pass one they already hold
          * ({@link JmsClient#destination(Destination)}). Nothing else in the client depends on it.</p>
+         *
+         * <p>The value is always a name, resolved by the {@link DestinationResolver} when
+         * {@code destination()} is called. On Jakarta EE that means it goes through
+         * {@code JMSContext.createQueue}/{@code createTopic} of the injected context, <b>not</b>
+         * through the {@code @JMSDestinationDefinition} resource - see the class documentation.
+         * Pass the injected {@link Destination} to {@link JmsClient#destination(Destination)} when
+         * the resource definition must be honoured.</p>
          */
         public final S defaultDestination(String defaultDestinationName) {
             this.defaultDestinationName = defaultDestinationName;
