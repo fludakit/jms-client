@@ -70,12 +70,16 @@
                             <goal>add-module-info</goal>
                         </goals>
                         <configuration>
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
                             <module>
-                                <!-- explicit descriptor: opens the bean package for the CDI
-                                     implementation and the MicroProfile Config extension, which
-                                     reflect over the property fields -->
-                                <moduleInfoFile>${project.basedir}/src/main/module/module-info.java</moduleInfoFile>
+                                <moduleInfo>
+                                    <name>fluda.jms.config</name>
+                                    <exports>
+                                        io.github.fludakit.jms.config;
+                                    </exports>
+                                    <opens>
+                                        io.github.fludakit.jms.config;
+                                    </opens>
+                                </moduleInfo>
                             </module>
                         </configuration>
                     </execution>

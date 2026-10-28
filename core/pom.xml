@@ -27,9 +27,14 @@
         <!-- optional JSON payload support: the API is compile-only, a provider is the
              application's choice (not a transitive dependency of this library) -->
         <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>jakarta.json.bind</groupId>
             <artifactId>jakarta.json.bind-api</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.eclipse</groupId>
@@ -86,11 +91,14 @@
                             <goal>add-module-info</goal>
                         </goals>
                         <configuration>
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
                             <module>
-                                <!-- explicit descriptor: JSON-B is `requires static`, which jdeps
-                                     cannot express when it generates the module-info -->
-                                <moduleInfoFile>${project.basedir}/src/main/module/module-info.java</moduleInfoFile>
+                                <moduleInfo>
+                                    <name>fluda.jms.core</name>
+                                    <exports>
+                                        io.github.fludakit.jms;
+                                        io.github.fludakit.jms.support;
+                                    </exports>
+                                </moduleInfo>
                             </module>
                         </configuration>
                     </execution>

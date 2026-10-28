@@ -63,11 +63,16 @@
                             <goal>add-module-info</goal>
                         </goals>
                         <configuration>
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
                             <module>
-                                <!-- explicit descriptor: opens the bean package for the CDI
-                                     implementation's reflection, which jdeps cannot infer -->
-                                <moduleInfoFile>${project.basedir}/src/main/module/module-info.java</moduleInfoFile>
+                                <moduleInfo>
+                                    <name>fluda.jms.cdi</name>
+                                    <exports>
+                                        io.github.fludakit.jms.cdi;
+                                    </exports>
+                                    <opens>
+                                        io.github.fludakit.jms.cdi;
+                                    </opens>
+                                </moduleInfo>
                             </module>
                         </configuration>
                     </execution>
