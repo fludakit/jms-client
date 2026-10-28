@@ -1,7 +1,6 @@
 package io.github.fludakit.jms.cdi;
 
 import io.github.fludakit.jms.CachingConnectionFactory;
-import io.github.fludakit.jms.support.ConnectionFactorySource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Instance;
@@ -10,8 +9,6 @@ import jakarta.enterprise.inject.Typed;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.jms.ConnectionFactory;
-
-import java.util.Optional;
 
 /**
  * Produces the {@link CachingConnectionFactory} that backs every
@@ -23,14 +20,9 @@ import java.util.Optional;
  * {@link CachingConnectionFactory}.</p>
  *
  * <h2>Which factory is cached</h2>
- * <p>The raw factory is resolved once, in this order:</p>
- * <ol>
- *   <li>the application's {@link ConnectionFactory} bean;</li>
- *   <li>the first {@link ConnectionFactorySource} bean that has something configured - the
- *       {@code config} module contributes one, which builds the Artemis or Qpid factory from the
- *       {@code fluda.jms.artemis.*} / {@code fluda.jms.qpid.*} section when that client is on the
- *       classpath.</li>
- * </ol>
+ * <p>The raw factory is the application's {@link ConnectionFactory} bean. Provider modules
+ * ({@code fluda-jms-artemis}, {@code fluda-jms-qpid}) produce one from their configuration
+ * properties.</p>
  *
  * <p>The properties that matter for CDI:</p>
  * <ul>
@@ -56,14 +48,10 @@ public class CachingConnectionFactoryProducer {
     @Inject
     Instance<ConnectionFactory> connectionFactories;
 
-    @Inject
-    Instance<ConnectionFactorySource> connectionFactorySources;
-
     /**
      * Produces the one caching factory of the application.
      *
-     * @throws IllegalStateException when no {@link ConnectionFactory} bean and no configured
-     *                               {@link ConnectionFactorySource} is available
+     * @throws IllegalStateException when no {@link ConnectionFactory} bean is available
      */
     @Produces
     @Typed(CachingConnectionFactory.class)
@@ -78,23 +66,14 @@ public class CachingConnectionFactoryProducer {
     }
 
     private ConnectionFactory rawConnectionFactory() {
-        if (!connectionFactories.isUnsatisfied()) {
-            return connectionFactories.get();
+        if (connectionFactories.isUnsatisfied()) {
+            throw new IllegalStateException(
+                    "No JMS resources available: provide a jakarta.jms.JMSContext bean (a"
+                            + " container-managed context, as on Jakarta EE), a"
+                            + " jakarta.jms.ConnectionFactory bean, or add a provider module"
+                            + " (fluda-jms-artemis or fluda-jms-qpid); optionally add a JmsConfig"
+                            + " bean for credentials and the default destination");
         }
-
-        for (ConnectionFactorySource source : connectionFactorySources) {
-            Optional<ConnectionFactory> factory = source.resolve();
-            if (factory.isPresent()) {
-                return factory.get();
-            }
-        }
-
-        throw new IllegalStateException(
-                "No JMS resources available: provide a jakarta.jms.JMSContext bean (a"
-                        + " container-managed context, as on Jakarta EE), a"
-                        + " jakarta.jms.ConnectionFactory bean, or configure a provider section -"
-                        + " fluda.jms.artemis.broker-url or fluda.jms.qpid.remote-url - with that"
-                        + " provider's client on the classpath; optionally add a JmsConfig bean for"
-                        + " credentials and the default destination");
+        return connectionFactories.get();
     }
 }

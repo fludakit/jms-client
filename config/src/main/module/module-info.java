@@ -7,13 +7,10 @@
  * <p>The bean package is {@code opens} because the CDI implementation and the MicroProfile Config
  * extension reflect over the producer method and the property fields.</p>
  */
-module fluda.jms.client.config {
-    requires transitive fluda.jms.client.core;
+module fluda.jms.config {
+    requires transitive fluda.jms.core;
     requires jakarta.cdi;
     requires microprofile.config.api;
-    // optional provider clients: only the one whose section is configured must be present at runtime
-    requires static artemis.jakarta.client;
-    requires static qpid.jms.client;
 
     exports io.github.fludakit.jms.config;
     opens io.github.fludakit.jms.config;

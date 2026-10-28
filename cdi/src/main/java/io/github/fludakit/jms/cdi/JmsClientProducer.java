@@ -24,12 +24,8 @@ import jakarta.jms.JMSContext;
  *   <li>a {@link ConnectionFactory} bean - the client is built from the
  *       {@link CachingConnectionFactory} of {@link CachingConnectionFactoryProducer}, so all
  *       clients on one thread share a context (and a connection) instead of opening one per
- *       injection.</li>
- *   <li>a {@link io.github.fludakit.jms.support.ConnectionFactorySource} bean - the {@code config}
- *       module contributes one that builds the Artemis or Qpid factory from the
- *       {@code fluda.jms.artemis.*} / {@code fluda.jms.qpid.*} section, when that provider's client
- *       is on the classpath. The client is built from the caching factory, exactly as for a
- *       factory bean.</li>
+ *       injection. Provider modules ({@code fluda-jms-artemis}, {@code fluda-jms-qpid}) produce
+ *       one from their configuration properties.</li>
  * </ol>
  *
  * <p>When none is available, production fails fast with {@link IllegalStateException} and
@@ -46,9 +42,10 @@ import jakarta.jms.JMSContext;
  * same way: define one to replace the client defaults ({@link
  * io.github.fludakit.jms.support.SimpleMessageConverter},
  * {@link io.github.fludakit.jms.support.SimpleDestinationResolver}) application-wide, for example
- * a {@link io.github.fludakit.jms.support.JsonbMessageConverter} or a JNDI-aware resolver. With
- * more than one candidate the container reports the ambiguity, so keep a single default bean (or
- * qualify the extra ones).</p>
+ * a {@link io.github.fludakit.jms.support.JsonbMessageConverter} or a
+ * {@link io.github.fludakit.jms.support.JndiDestinationResolver}. With more than one candidate
+ * the container reports the ambiguity, so keep a single default bean (or qualify the extra
+ * ones).</p>
  *
  * <h2>Scope</h2>
  * <p>The produced client is {@link Dependent}: a {@link JmsClient} is not thread-safe, so one

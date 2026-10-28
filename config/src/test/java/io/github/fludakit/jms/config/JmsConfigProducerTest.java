@@ -63,10 +63,10 @@ class JmsConfigProducerTest {
     @Test
     void treatsBlankValuesAsUnset() {
         // the username is the one that matters: blank must not become an authenticated context
-        assertNull(JmsConfigProducer.nullIfBlank(null));
-        assertNull(JmsConfigProducer.nullIfBlank(""));
-        assertNull(JmsConfigProducer.nullIfBlank("   "));
-        assertEquals("admin", JmsConfigProducer.nullIfBlank("admin"));
+        assertNull(JmsConfigProducer.nonBlank(null));
+        assertNull(JmsConfigProducer.nonBlank(""));
+        assertNull(JmsConfigProducer.nonBlank("   "));
+        assertEquals("admin", JmsConfigProducer.nonBlank("admin"));
     }
 
     private static Weld weld() {

@@ -10,8 +10,8 @@ import jakarta.jms.JMSContext;
  *
  * <p>The default {@link SimpleDestinationResolver} creates the destination on the broker
  * (cached per name): names prefixed with {@code topic:} resolve to a topic, everything else to a
- * queue. Applications can plug in their own - e.g. a JNDI resolver on Jakarta EE or an
- * explicit-registry resolver.</p>
+ * queue. Applications can plug in their own - e.g. the {@link JndiDestinationResolver} on
+ * Jakarta EE or an explicit-registry resolver.</p>
  */
 @FunctionalInterface
 public interface DestinationResolver {

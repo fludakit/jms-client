@@ -4,14 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <artifactId>fluda-jms-parent</artifactId>
     <parent>
         <groupId>io.github.fludakit</groupId>
         <artifactId>fludakit-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath/>
     </parent>
-
-        <artifactId>fluda-jms-client-parent</artifactId>
     <packaging>pom</packaging>
 
     <!-- TODO: Update name, description, and URL -->
@@ -45,6 +44,8 @@
         <module>core</module>
         <module>cdi</module>
         <module>config</module>
+        <module>artemis</module>
+        <module>qpid</module>
     </modules>
 
     <properties>
@@ -52,27 +53,35 @@
         <artemis.version>2.40.0</artemis.version>
         <qpid-jms.version>2.7.0</qpid-jms.version>
         <yasson.version>3.0.5</yasson.version>
-        <fluda-jms-client.version>1.0.0-SNAPSHOT</fluda-jms-client.version>
+        <fluda-jms.version>1.0.0-SNAPSHOT</fluda-jms.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- jakarta.jms-api is version-managed by the parent's jakarta.jms-api.version BOM;
-                 a version-less override here shadows that import and breaks Maven 3 -->
             <dependency>
                 <groupId>io.github.fludakit</groupId>
-                <artifactId>fluda-jms-client-core</artifactId>
-                <version>${fluda-jms-client.version}</version>
+                <artifactId>fluda-jms-core</artifactId>
+                <version>${fluda-jms.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.fludakit</groupId>
-                <artifactId>fluda-jms-client-cdi</artifactId>
-                <version>${fluda-jms-client.version}</version>
+                <artifactId>fluda-jms-cdi</artifactId>
+                <version>${fluda-jms.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.fludakit</groupId>
-                <artifactId>fluda-jms-client-config</artifactId>
-                <version>${fluda-jms-client.version}</version>
+                <artifactId>fluda-jms-config</artifactId>
+                <version>${fluda-jms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.fludakit</groupId>
+                <artifactId>fluda-jms-artemis</artifactId>
+                <version>${fluda-jms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.fludakit</groupId>
+                <artifactId>fluda-jms-qpid</artifactId>
+                <version>${fluda-jms.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.activemq</groupId>

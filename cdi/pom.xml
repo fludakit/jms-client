@@ -6,12 +6,12 @@
 
     <parent>
         <groupId>io.github.fludakit</groupId>
-        <artifactId>fluda-jms-client-parent</artifactId>
+        <artifactId>fluda-jms-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>fluda-jms-client-cdi</artifactId>
+    <artifactId>fluda-jms-cdi</artifactId>
     <packaging>jar</packaging>
 
     <name>FluDa :: Jms Client :: CDI</name>
@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.fludakit</groupId>
-            <artifactId>fluda-jms-client-core</artifactId>
+            <artifactId>fluda-jms-core</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>

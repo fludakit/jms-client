@@ -31,14 +31,14 @@ public class JmsConfigProducer {
     @Singleton
     public JmsConfig produce() {
         return JmsConfig.builder()
-                .username(nullIfBlank(properties.username.orElse(null)))
-                .password(nullIfBlank(properties.password.orElse(null)))
+                .username(nonBlank(properties.username.orElse(null)))
+                .password(nonBlank(properties.password.orElse(null)))
                 .sessionMode(AcknowledgeMode.from(properties.acknowledgeMode.orElse(null)).sessionMode())
-                .defaultDestination(nullIfBlank(properties.defaultDestination.orElse(null)))
+                .defaultDestination(nonBlank(properties.defaultDestination.orElse(null)))
                 .build();
     }
 
-    static String nullIfBlank(String value) {
+    static String nonBlank(String value) {
         return value == null || value.isBlank() ? null : value;
     }
 }

@@ -15,23 +15,23 @@ v1 is implemented - see [issue #1](../../issues/1) for the requirements plan and
 
 | Module | Responsibility |
 |---|---|
-| `fluda-jms-client-core` | `JmsClient` API, `MessageConverter` and `DestinationResolver` SPI, `CachingConnectionFactory` - Jakarta Messaging API only |
-| `fluda-jms-client-cdi` | CDI producers for `JmsClient` and `CachingConnectionFactory` |
-| `fluda-jms-client-config` | MicroProfile Config `fluda.jms.*` -> `JmsConfig`, and Artemis/Qpid connection factories |
+| `fluda-jms-core` | `JmsClient` API, `MessageConverter` and `DestinationResolver` SPI (including `JndiDestinationResolver`), `CachingConnectionFactory` - Jakarta Messaging API only |
+| `fluda-jms-cdi` | CDI producers for `JmsClient` and `CachingConnectionFactory` |
+| `fluda-jms-config` | MicroProfile Config `fluda.jms.*` client-wide properties -> `JmsConfig` |
+| `fluda-jms-artemis` | Artemis connection factory producer from `fluda.jms.artemis.*` properties |
+| `fluda-jms-qpid` | Qpid JMS connection factory producer from `fluda.jms.qpid.*` properties |
 
-All modules share one version. Add `fluda-jms-client-core` for plain Java SE:
+All modules share one version. Add `fluda-jms-core` for plain Java SE:
 
 ```xml
 <dependency>
     <groupId>io.github.fludakit</groupId>
-    <artifactId>fluda-jms-client-core</artifactId>
+    <artifactId>fluda-jms-core</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
-For CDI, add `fluda-jms-client-cdi` - plus `fluda-jms-client-config` when the connection factory
-should come from properties - and the client of the provider you use (`artemis-jakarta-client` or
-`qpid-jms-client`).
+For CDI, add `fluda-jms-cdi`, `fluda-jms-config` (optional, for client-wide properties), and the provider module for your broker (`fluda-jms-artemis` or `fluda-jms-qpid`).
 
 ## Usage
 

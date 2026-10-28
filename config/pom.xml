@@ -6,22 +6,23 @@
 
     <parent>
         <groupId>io.github.fludakit</groupId>
-        <artifactId>fluda-jms-client-parent</artifactId>
+        <artifactId>fluda-jms-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>fluda-jms-client-config</artifactId>
+    <artifactId>fluda-jms-config</artifactId>
     <packaging>jar</packaging>
 
     <name>FluDa :: Jms Client :: Config</name>
-    <description>MicroProfile Config mapping (fluda.jms.*) to JmsConfig, plus Artemis/Qpid connection
-        factories built from their provider sections.</description>
+    <description>MicroProfile Config mapping (fluda.jms.*) to JmsConfig - client-wide properties only.
+        Provider-specific properties and connection factories belong to fluda-jms-artemis and
+        fluda-jms-qpid.</description>
 
     <dependencies>
         <dependency>
             <groupId>io.github.fludakit</groupId>
-            <artifactId>fluda-jms-client-core</artifactId>
+            <artifactId>fluda-jms-core</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>
@@ -37,17 +38,6 @@
             <groupId>org.eclipse.microprofile.config</groupId>
             <artifactId>microprofile-config-api</artifactId>
             <scope>provided</scope>
-        </dependency>
-        <!-- Optional: only the provider whose section is configured is needed at runtime. -->
-        <dependency>
-            <groupId>org.apache.activemq</groupId>
-            <artifactId>artemis-jakarta-client</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.qpid</groupId>
-            <artifactId>qpid-jms-client</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>

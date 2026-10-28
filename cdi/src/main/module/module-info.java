@@ -7,8 +7,8 @@
  * <p>The bean package is {@code opens} because the CDI implementation (Weld in the tests, the
  * server's CDI container on Jakarta EE) reflects over producer methods and qualifiers.</p>
  */
-module fluda.jms.client.cdi {
-    requires transitive fluda.jms.client.core;
+module fluda.jms.cdi {
+    requires transitive fluda.jms.core;
     requires transitive jakarta.cdi;
     requires transitive jakarta.messaging;
 
