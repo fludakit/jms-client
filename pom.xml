@@ -50,7 +50,7 @@
 
     <properties>
         <!-- Module-specific properties can be added here -->
-        <artemis.version>2.40.0</artemis.version>
+        <artemis.version>2.57.0</artemis.version>
         <qpid-jms.version>2.7.0</qpid-jms.version>
         <yasson.version>3.0.5</yasson.version>
         <fluda-jms.version>1.0.0-SNAPSHOT</fluda-jms.version>
