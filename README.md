@@ -50,7 +50,7 @@ In a CDI application, inject `JmsClient` instead - the `cdi` and `config` module
 
 ## Documentation
 
-The [JMS client documentation](https://fludakit.github.io/documentation/jms-client/getting-started/)
+The [JMS client documentation](https://fludakit.github.io/jms-client/getting-started/)
 covers CDI in Java SE, Jakarta EE, configuration, converters and destination resolution.
 
 Runnable examples live in [fludakit/examples](https://github.com/fludakit/examples):
