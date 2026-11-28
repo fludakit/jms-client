@@ -31,3 +31,8 @@ The project is organized into five published modules:
 - Start with [getting started](getting-started.md) to add the dependencies and send your first message in Java SE or CDI.
 - For Jakarta EE servers, see [Jakarta EE](jakarta-ee.md).
 - The runnable examples in [fludakit/examples](https://github.com/fludakit/examples) cover plain Java SE (`jms-client-vanilla`), CDI with Artemis (`jms-client-artemis`), AMQP 1.0 with Qpid JMS (`jms-client-qpid`) and Jakarta EE on GlassFish and WildFly (`jms-client-jakartaee`).
+
+
+---
+
+[FluDa Toolkit — browse all modules](https://fludakit.github.io/){ .md-button .md-button--primary }
